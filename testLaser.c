@@ -1,9 +1,10 @@
 #include <wiringPi.h>
 #include <unistd.h>
+#include <stdio.h>
 
 int main (void)
 {
-	int dly = 200;
+	int dly = 1000;
 	wiringPiSetup();
 	pinMode(0, OUTPUT);
 
