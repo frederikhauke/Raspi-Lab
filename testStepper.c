@@ -3,7 +3,7 @@
 #include <wiringPi.h>
 int main (void)
 {
-	int dly = 2;
+	int dly = 1;
 	wiringPiSetup();
 	pinMode(6, OUTPUT);
 	pinMode(10, OUTPUT);
