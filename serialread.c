@@ -18,11 +18,13 @@ int counter;
 int dly = 2;
 int dlys = 1;
 int dlyl;
+int phase = 0;
+int step_phases[4];
 
 
 void step(int k)
 {
-
+	dlys = dly;
 	pinMode(6, OUTPUT);
 	pinMode(10, OUTPUT);
 	pinMode(11, OUTPUT);
@@ -30,56 +32,36 @@ void step(int k)
 	dlyl = dly - dlys;
 	
 	int i;
-	for(i=0; i<k; i++){
-			
-				digitalWrite(6, HIGH) ; 
-				digitalWrite(10, LOW) ; 
-				digitalWrite(11, LOW) ; 
-				digitalWrite(31, LOW) ; 
-		delay(dlys);	
-				digitalWrite(6,LOW) ; 
-				digitalWrite(10, LOW) ; 
-				digitalWrite(11, LOW) ; 
-				digitalWrite(31, LOW) ; 
-		delay(dlyl);		
-
- 		
- 		    
-                digitalWrite(6, LOW) ; 
-                digitalWrite(10, HIGH) ; 
-                digitalWrite(11, LOW) ; 
-                digitalWrite(31, LOW) ; 
-        delay(dlys);	
-				digitalWrite(6,LOW) ; 
-				digitalWrite(10, LOW) ; 
-				digitalWrite(11, LOW) ; 
-				digitalWrite(31, LOW) ; 
-		delay(dlyl);
+	for(i=0; i<abs(k); i++){
+		int j; 
+		for(j=0; j<4; j++){
+				step_phases[j] = 0;
+				step_phases[phase] = 1;
+		}
 		
-	    
-                digitalWrite(6, LOW) ; 
-                digitalWrite(10, LOW) ; 
-                digitalWrite(11, HIGH) ; 
-                digitalWrite(31, LOW) ; 
-        delay(dlys);	
-				digitalWrite(6,LOW) ; 
-				digitalWrite(10, LOW) ; 
-				digitalWrite(11, LOW) ; 
-				digitalWrite(31, LOW) ; 
- 		delay(dlyl);
+		if(k >= 0){
+			phase++;
+			if(phase == 4) phase = 0;
+		}
+		if(k < 0){
+			phase--;
+			if(phase == -1) phase = 3;
+		}
 		
-    
-                digitalWrite(6, LOW) ; 
-                digitalWrite(10, LOW) ; 
-                digitalWrite(11, LOW) ; 
-                digitalWrite(31, HIGH) ; 
-        delay(dlys);	
-				digitalWrite(6,LOW) ; 
+				digitalWrite(6, step_phases[0]) ; 
+				digitalWrite(10, step_phases[1]) ; 
+				digitalWrite(11, step_phases[2]) ; 
+				digitalWrite(31, step_phases[3]) ; 
+			delay(dlys);	
+				digitalWrite(6, LOW) ; 
 				digitalWrite(10, LOW) ; 
 				digitalWrite(11, LOW) ; 
 				digitalWrite(31, LOW) ; 
-		delay(dlyl);
+			delay(dlyl); 		
+		
 	}
+	
+	
 }
 
 void *threadFunc(void *arg)
@@ -89,7 +71,10 @@ void *threadFunc(void *arg)
 		step(1);
 		usleep(act_vals[1]);
 	}*/
-	step(259);
+	step(-256);
+	step(256);
+	step(-512);
+	step(512);
 
 	return NULL;
 }
