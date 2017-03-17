@@ -19,23 +19,34 @@ char buffer[128];
 int act_vals[NUM_PHOTODIODES];
 int counter;
 int phase = 0;
+int checker = 0;
 int step_phases[4];
+int beamHit;
+int count_stepsOnDiode;
+int counter_midFound;
 
 //Parameters
-int dly = 1;
+int dly = 50;
 int slope_loops = 15;
 
 
 
-void step(int k)
+void step(int k, int p)
 {
-	pinMode(6, OUTPUT); //Step
-	pinMode(10, OUTPUT); //Dir
-	
+	int stepPin = 0;
+	int dirPin = 0;
+	if(p == 0){
+		pinMode(6, OUTPUT);  stepPin = 6;
+		pinMode(10, OUTPUT); dirPin = 10;
+	} else{
+		pinMode(11, OUTPUT); stepPin = 11;
+		pinMode(31, OUTPUT); dirPin = 31; dly = 10;
+	}
+
 	if(k<0){
-		digitalWrite(10, HIGH);	
+		digitalWrite(dirPin, HIGH);	
 	}else{
-		digitalWrite(10, LOW);
+		digitalWrite(dirPin, LOW);
 	}
 	
 	
@@ -53,38 +64,79 @@ void step(int k)
 			dly_slope = dly * (slope_loops - (abs(k) - i));
 		}
 		
-				digitalWrite(6, HIGH);
+				digitalWrite(stepPin, HIGH);
 				usleep(500);
-				digitalWrite(6, LOW);
+				digitalWrite(stepPin, LOW);
 				usleep(500);
-			//delay(dly + dly_slope);
-			delay(5);	
+			
+				usleep(dly + dly_slope);
 	}
-	
-	
+		
 }
+
+
 
 void *threadFunc(void *arg)
 {
-	/*while(1){
-		//printf("Hallo ich bin's, der Thread");
-		step(1);
-		usleep(act_vals[1]);
-	}*/
-	printf("Thread thrown");
-	int i=0;
-	for(i=0; i<20; i++){
-		digitalWrite(0, HIGH);
-		step(-1024);
-		digitalWrite(0, LOW);
-		delay(1000);
-		digitalWrite(0, HIGH);
-		step(1024);
-		digitalWrite(0, LOW);
-		delay(1000);
-	
+	while(1){
+		step(-1, 1);
+		delay(2000);
 	}
 
+	
+	printf("Thread thrown");
+	/*int i=0;
+	int p = 1;
+	
+	while(1){
+			digitalWrite(7, LOW);
+			digitalWrite(8, HIGH);
+			digitalWrite(9, LOW);
+				
+			if(beamHit == 0) step(1, p);
+			else break;
+	}
+	step(20, p);
+	digitalWrite(7, HIGH);
+	digitalWrite(8, HIGH);
+	digitalWrite(9, LOW);
+	//step(-30, p);
+	
+	digitalWrite(7, HIGH);
+	digitalWrite(8, LOW);
+	digitalWrite(9, HIGH);
+	
+	beamHit =0;
+	checker = 1;
+	while(checker){
+		checker = 0;
+		while(1){
+				if(beamHit == 0) step(-1, p);
+				else break;
+			
+				delay(100);
+		}
+	
+		while(1){
+				step(-1, p);
+				if(beamHit == 1) count_stepsOnDiode++;
+				else if(count_stepsOnDiode > 1 && beamHit == 0)break;
+				beamHit = 0;
+				delay(100);
+		}
+		step( (int)(count_stepsOnDiode / 2), p );
+		printf("Go to mid");
+		printf("%i\n", count_stepsOnDiode);
+		count_stepsOnDiode = 0;
+		
+		checker = 1;
+		while(1){
+			if(counter_midFound > 6) { checker = 0; counter_midFound = 0; break;}
+		}
+		
+		if(checker == 1) step(15, p);
+	}
+	* */
 	return NULL;
 }
 
@@ -109,7 +161,9 @@ int main (void)
     loc_addr.rc_bdaddr = *BDADDR_ANY;
     loc_addr.rc_channel = (uint8_t) 1;
     bind(s, (struct sockaddr *)&loc_addr, sizeof(loc_addr));
-
+	
+	printf("Waiting for Bluetooth-Connection ...\n");
+	
     // put socket into listening mode
     listen(s, 1);
 
@@ -125,6 +179,10 @@ int main (void)
 	printf("main wirft den Thread\n");
 	
 	pinMode(0, OUTPUT);
+	pinMode(7, OUTPUT);
+	pinMode(8, OUTPUT);
+	pinMode(9, OUTPUT);
+	digitalWrite(0, HIGH);
 	
 	pthread_t pth;  // this is our thread identifier
         
@@ -134,7 +192,11 @@ int main (void)
 		
 		bytes_read = read(client, buf, sizeof(buf));
         if( bytes_read > 0 ) {
+                printf("%i,", counter); counter++;
                 printf("received [%s]\n", buf);
+                beamHit = 1;
+                if(checker == 1) counter_midFound++;
+               
         }
 
 	}
